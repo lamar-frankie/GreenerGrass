@@ -3,16 +3,19 @@ package com.adamanteusstudios.greenergrass;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 
 
 public class MainActivity extends ActionBarActivity {
-    String errorString = "An error has occured. Please check you network connection and try again."
+    String errorString = "An error has occured. Please check you network connection and try again.";
 
 
 
@@ -45,7 +48,7 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private class DownloadDate extends AsyncTask<String, void, String>{
+    private class DownloadData extends AsyncTask<String, Void, String>{
 
         String freeXmlData;
         String paidXmlData;
@@ -71,11 +74,45 @@ public class MainActivity extends ActionBarActivity {
         String xmlContent = "";
 
         try{
-            URL freeUrl = new URL(theUrl);
+            URL url = new URL(theUrl);
+            HttpURLConnection connecion = (HttpURLConnection) url.openConnection();//connect to url and download file
+            connecion.setReadTimeout(10000); //reading should timeout after 10 seconds
+            connecion.setConnectTimeout(15000); //the connectiosn itself should time out after 15 seconds
+            connecion.setRequestMethod("GET");//command to down load the file
+            connecion.setDoInput(true);
+            int response = connecion.getResponseCode();//a good connection should return 200
+            Log.d("downloadXML", "The repsonse code is: " + response);//putting request code to log of debugging
+
+            //connectiong input stream to url
+            is = connecion.getInputStream();
+
+            //loop through file till we get to the end
+            InputStreamReader isr = new InputStreamReader(is);
+            int charRead; //each character is read individually and fed in to an array
+            char[] inputBuffer = new char[BUFFER_SIZE];
+
+            try{
+                while((charRead = isr.read(inputBuffer)){ //while there is still data keep processing it
+                    //put the chars from the input Buffer into a string called readString
+                    //add the read string to the xmlContent
+                    //reset the inputBuffer for the next 2000(or less) characters
+                    String readString = String.copyValueOf(inputBuffer, 0, charRead);
+                    xmlContent += readString;
+                    inputBuffer = new char[BUFFER_SIZE];
+
+                }
+
+            }catch (IOException e){
+                e.printStackTrace();//printing error so stack for debugging
+                return null;
+            }
+
+
+
 
         } finally{
             //do this no matter what even if there is an error
-            if(is != null){ //is = input stream
+            if(is != null){ //is = input stream;
                 is.close();
             }
         }
